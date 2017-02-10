@@ -5,6 +5,7 @@ const cmdLineProcess = require('./lib/cmdline');
 console.log('noble');
 var sensor;
 
+//trying to connect AWS and also scan for the device contains certain UUID
 noble.on('stateChange', function(state) {
   console.log('on -> stateChange: ' + state);
 
@@ -25,27 +26,32 @@ noble.on('scanStop', function() {
   console.log('on -> scanStop');
 });
 
+//when discovered device 
 noble.on('discover', function(peripheral){
   console.log('on-discover:' + peripheral.address);
 
-
+  //trying to connect device
   peripheral.connect(function(error){
     console.log('connected to peripheral: ' + peripheral.uuid);
-
+    
+    //trying to find the service of certain UUID
     peripheral.discoverServices(['09876543210987654321098765432109'], function(error, services) {
       var temperatureService = services[0];
       console.log('discover temperature service' + services);
 
+      //trying to find characteristics of certain UUID 
       temperatureService.discoverCharacteristics(['12345678901234567890123456789012'], function(error, characteristics) {
 	var temperatureChar = characteristics[0];
 	console.log('discover temperature character');
-
+	
+	//set the sensor to notify data
 	temperatureChar.notify(true, function(error) {
 	  console.log('temperature notification on');
 	});
 
 	temperatureChar.on('read', function(data, isNotification){
-	
+
+	//publish data when get the sensor data	
 	console.log('temperature is :' + data);
 	var mydata = data + "";
 	var tempHumi = mydata.split(",");
@@ -70,6 +76,7 @@ noble.on('discover', function(peripheral){
 
 module.exports = initDevice;
 
+//init device when trying to connect AWS
 function initDevice(args){
    console.log('in initDevice the args is ', args.Protocol);
    sensor = deviceModule({
